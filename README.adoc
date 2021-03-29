@@ -1,0 +1,57 @@
+:toc: macro
+= aws sqs lab
+
+[.lead]
+poc aws services for event based workflows
+
+== install
+
+=== Setup localstack
+We use https://github.com/localstack/localstack[localstack] as our local mock
+of aws. To deploy:
+
+[source,bash]
+----
+$ cd deploy
+$ docker-compose up -d
+$ curl http://localhost:4566/health
+----
+
+You should see a json response of the aws services we have mocked up.
+
+=== Setup aws cli
+aws cli would work, but localstack has its own wrapper to make it easier to
+interact directly with localstack.
+
+[source,bash]
+----
+$ echo 'you probably want to use a venv'
+$ pip install -r requirements.txt
+----
+
+=== Create a queue
+With your newly installed cli, you can create a queue!
+
+[source,bash]
+----
+$ awslocal sqs create-queue --queue-name hello
+{
+    "QueueUrl": "http://localhost:4566/000000000000/hello"
+}
+$ awslocal sqs send-message --queue-url "http://localhost:4566/000000000000/hello" --message-body 'world'
+{
+    "MD5OfMessageBody": "7d793037a0760186574b0282f2f435e7",
+    "MessageId": "ea3d743c-47d1-88ef-f177-e110cbcff094"
+}
+$ awslocal sqs receive-message --queue-url "http://localhost:4566/000000000000/hello"
+{
+    "Messages": [
+        {
+            "MessageId": "ea3d743c-47d1-88ef-f177-e110cbcff094",
+            "ReceiptHandle": "tonuasftfflvynoytjdtxprkxwlwnpjeczqevqwdxkblgffgavlgvelqtzlkwjxywkqhtpfuwvgohsmxzkzmbrthfwkoakvldepwqbjahcfmrjdazjywsozjgwwtonfikwpxtmupggzeigjaoqshjsrxtpuwpfhetgjwmpstrtnuenrdwfgrfmolj",
+            "MD5OfBody": "7d793037a0760186574b0282f2f435e7",
+            "Body": "world"
+        }
+    ]
+}
+----
