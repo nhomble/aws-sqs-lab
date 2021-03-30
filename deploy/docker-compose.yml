@@ -1,11 +1,11 @@
-version: '3.1'
+version: '2'
 
 services:
   aws:
-    container_name: aws-lab
-    image: localstack/localstack
+    container_name: $AWS_HOST
+    image: localstack/localstack:0.12.3
     ports:
-      - "4566:4566"
+      - "$AWS_PORT:$AWS_PORT"
       - "4571:4571"
       - "${PORT_WEB_UI-8080}:${PORT_WEB_UI-8080}"
     environment:
@@ -16,6 +16,22 @@ services:
       - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR- }
       - DOCKER_HOST=unix:///var/run/docker.sock
       - HOST_TMP_FOLDER=${TMPDIR}
+      - HOSTNAME_EXTERNAL=$AWS_HOST
     volumes:
       - "${TMPDIR:-/tmp/localstack}:/tmp/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+  publisher:
+    build: ../app/publisher/.
+    restart: always
+    environment:
+      APP_ENDPOINT: $AWS_ENDPOINT
+    depends_on:
+      - aws
+  consumer:
+    build: ../app/poller/.
+    environment:
+      APP_ENDPOINT: $AWS_ENDPOINT
+    restart: always
+    depends_on:
+      - aws
+      - publisher
